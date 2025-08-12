@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, AppBar, Toolbar, Typography, IconButton, Drawer, Divider, Snackbar, Alert, Tooltip, Fade } from '@mui/material';
+import { Box, AppBar, Toolbar, Typography, IconButton, Drawer, Divider, Snackbar, Alert, Tooltip, Fade, Tab, Tabs } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -7,25 +7,30 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import CodeIcon from '@mui/icons-material/Code';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import ChatIcon from '@mui/icons-material/Chat';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 import FileExplorer from './FileExplorer';
 import Editor from './Editor';
-import ChatPanel from './ChatPanel';
+import AIAssistant from './AIAssistant';
+import CodeGenerator from './CodeGenerator';
+import ProjectAnalyzer from './ProjectAnalyzer';
 import Terminal from './Terminal';
 import axios from 'axios';
 
 const Dashboard = ({ darkMode, toggleDarkMode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [chatOpen, setChatOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [rightPanelTab, setRightPanelTab] = useState(0);
   const [terminalOpen, setTerminalOpen] = useState(true);
   const [files, setFiles] = useState([]);
   const [currentFile, setCurrentFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
   const [sessionId, setSessionId] = useState(null);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [isLoading, setIsLoading] = useState(false);
+  const [projectContext, setProjectContext] = useState(null);
 
   useEffect(() => {
     // Generate a session ID when the component mounts
@@ -33,7 +38,22 @@ const Dashboard = ({ darkMode, toggleDarkMode }) => {
     
     // Fetch files from the backend
     fetchFiles();
+    
+    // Load project context
+    loadProjectContext();
   }, []);
+
+  const loadProjectContext = async () => {
+    try {
+      const response = await axios.post('http://localhost:8001/api/analyze-project', {
+        project_path: '.',
+        analysis_type: 'structure'
+      });
+      setProjectContext(response.data);
+    } catch (error) {
+      console.error('Error loading project context:', error);
+    }
+  };
 
   const fetchFiles = async () => {
     try {
@@ -109,35 +129,26 @@ const Dashboard = ({ darkMode, toggleDarkMode }) => {
     }
   };
 
-  const handleSendMessage = async (message) => {
-    // Add user message to chat history
-    const userMessage = { role: 'user', content: message, timestamp: new Date() };
-    setChatHistory(prev => [...prev, userMessage]);
-    
+  const handleSaveGeneratedCode = async (filename, content) => {
     try {
-      const response = await axios.post('http://localhost:8001/api/chat', {
-        message: message,
-        session_id: sessionId,
-        model: 'gpt-4o' // Default model
+      const response = await axios.post('http://localhost:8001/api/file-operation', {
+        operation: 'create',
+        path: filename,
+        content: content
       });
       
-      if (response.data && response.data.response) {
-        // Add AI response to chat history
-        const aiMessage = { role: 'assistant', content: response.data.response, timestamp: new Date() };
-        setChatHistory(prev => [...prev, aiMessage]);
+      if (response.data && response.data.success) {
+        setShowSnackbar(true);
+        setSnackbarMessage(`Generated code saved as ${filename}`);
+        setSnackbarSeverity('success');
+        
+        // Refresh files to show the new file
+        fetchFiles();
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      // Add error message to chat history
-      const errorMessage = { 
-        role: 'system', 
-        content: 'Error: Could not get a response from the AI. Please try again.', 
-        timestamp: new Date() 
-      };
-      setChatHistory(prev => [...prev, errorMessage]);
-      
+      console.error('Error saving generated code:', error);
       setShowSnackbar(true);
-      setSnackbarMessage('Error sending message to AI');
+      setSnackbarMessage('Error saving generated code');
       setSnackbarSeverity('error');
     }
   };
@@ -192,21 +203,23 @@ const Dashboard = ({ darkMode, toggleDarkMode }) => {
             </IconButton>
           </Tooltip>
           
-          <Tooltip title="Toggle Chat Panel">
+          <Tooltip title="Toggle AI Panel">
             <IconButton 
               color="inherit" 
-              onClick={() => setChatOpen(!chatOpen)}
+              onClick={() => setRightPanelOpen(!rightPanelOpen)}
               sx={{
                 mx: 1,
                 transition: 'all 0.2s',
-                color: chatOpen ? 'primary.light' : 'inherit',
+                color: rightPanelOpen ? 'primary.light' : 'inherit',
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   transform: 'translateY(-2px)'
                 }
               }}
             >
-              <ChatIcon />
+              {rightPanelTab === 0 ? <ChatIcon /> : 
+               rightPanelTab === 1 ? <AutoFixHighIcon /> : 
+               <AnalyticsIcon />}
             </IconButton>
           </Tooltip>
           
@@ -270,13 +283,43 @@ const Dashboard = ({ darkMode, toggleDarkMode }) => {
             </Box>
           </Box>
           
-          <Box className={`chat-panel ${!chatOpen ? 'collapsed' : ''}`}>
-            <ChatPanel 
-              chatHistory={chatHistory} 
-              onSendMessage={handleSendMessage}
-              onToggle={() => setChatOpen(!chatOpen)}
-              darkMode={darkMode}
-            />
+          <Box className={`chat-panel ${!rightPanelOpen ? 'collapsed' : ''}`}>
+            {rightPanelOpen && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Tabs
+                  value={rightPanelTab}
+                  onChange={(e, newValue) => setRightPanelTab(newValue)}
+                  variant="fullWidth"
+                  sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}
+                >
+                  <Tab icon={<ChatIcon />} label="AI Chat" />
+                  <Tab icon={<AutoFixHighIcon />} label="Code Gen" />
+                  <Tab icon={<AnalyticsIcon />} label="Analysis" />
+                </Tabs>
+                
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                  {rightPanelTab === 0 && (
+                    <AIAssistant
+                      onToggle={() => setRightPanelOpen(!rightPanelOpen)}
+                      darkMode={darkMode}
+                      currentFile={currentFile}
+                      projectContext={projectContext}
+                    />
+                  )}
+                  {rightPanelTab === 1 && (
+                    <CodeGenerator
+                      darkMode={darkMode}
+                      onSaveCode={handleSaveGeneratedCode}
+                    />
+                  )}
+                  {rightPanelTab === 2 && (
+                    <ProjectAnalyzer
+                      darkMode={darkMode}
+                    />
+                  )}
+                </Box>
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
