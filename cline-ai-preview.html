@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Engineer - Preview</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            --secondary-color: #f50057;
+            --background-color: #121212;
+            --paper-color: #1e1e1e;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .app-header {
+            background-color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .app-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .icon-button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--paper-color);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-explorer {
+            padding: 0.5rem 0;
+        }
+        
+        .folder {
+            padding: 0.25rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .folder:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .file {
+            padding: 0.25rem 1rem 0.25rem 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .file:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .file.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--paper-color);
+        }
+        
+        .editor-header {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .editor-content {
+            flex: 1;
+            padding: 1rem;
+            overflow: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre;
+            color: #d4d4d4;
+            background-color: #1e1e1e;
+        }
+        
+        .terminal-container {
+            height: 250px;
+            border-top: 1px solid var(--border-color);
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 0.5rem;
+            overflow: auto;
+        }
+        
+        .terminal-header {
+            padding: 0.25rem 0.5rem;
+            background-color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .chat-panel {
+            width: 350px;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--paper-color);
+        }
+        
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #333;
+        }
+        
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            background-color: #333;
+            color: white;
+        }
+        
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .send-button:hover {
+            background-color: #303f9f;
+        }
+        
+        /* Demo banner */
+        .demo-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            z-index: 1000;
+            font-size: 0.875rem;
+        }
+        
+        .demo-banner a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .demo-banner a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-banner">
+        This is a static preview of the AI Engineer application. For full functionality, <a href="https://github.com/yourusername/ai-engineer">set up the complete application</a>.
+    </div>
+    
+    <div class="app-container">
+        <header class="app-header">
+            <div class="app-title">AI Engineer</div>
+            <div class="header-actions">
+                <button class="icon-button" title="Settings">
+                    ⚙️
+                </button>
+                <button class="icon-button" title="Toggle Dark Mode">
+                    🌙
+                </button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div>Explorer</div>
+                    <button class="icon-button" title="Refresh">
+                        🔄
+                    </button>
+                </div>
+                <div class="file-explorer">
+                    <div class="folder">
+                        <span>📁</span>
+                        <span>src</span>
+                    </div>
+                    <div class="file">
+                        <span>📄</span>
+                        <span>index.js</span>
+                    </div>
+                    <div class="file active">
+                        <span>📄</span>
+                        <span>App.js</span>
+                    </div>
+                    <div class="file">
+                        <span>📄</span>
+                        <span>styles.css</span>
+                    </div>
+                    <div class="folder">
+                        <span>📁</span>
+                        <span>components</span>
+                    </div>
+                    <div class="file">
+                        <span>📄</span>
+                        <span>Dashboard.js</span>
+                    </div>
+                    <div class="file">
+                        <span>📄</span>
+                        <span>ChatPanel.js</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workspace">
+                <div class="editor-container">
+                    <div class="editor-header">
+                        <div>App.js</div>
+                        <button class="icon-button" title="Save">
+                            💾
+                        </button>
+                    </div>
+                    <div class="editor-content">
+<span style="color: #569cd6;">import</span> React, { useState, useEffect } <span style="color: #569cd6;">from</span> <span style="color: #ce9178;">'react'</span>;
+<span style="color: #569cd6;">import</span> { Routes, Route } <span style="color: #569cd6;">from</span> <span style="color: #ce9178;">'react-router-dom'</span>;
+<span style="color: #569cd6;">import</span> <span style="color: #ce9178;">'./App.css'</span>;
+<span style="color: #569cd6;">import</span> Dashboard <span style="color: #569cd6;">from</span> <span style="color: #ce9178;">'./components/Dashboard'</span>;
+<span style="color: #569cd6;">import</span> Login <span style="color: #569cd6;">from</span> <span style="color: #ce9178;">'./components/Login'</span>;
+<span style="color: #569cd6;">import</span> { ThemeProvider, createTheme } <span style="color: #569cd6;">from</span> <span style="color: #ce9178;">'@mui/material/styles'</span>;
+<span style="color: #569cd6;">import</span> CssBaseline <span style="color: #569cd6;">from</span> <span style="color: #ce9178;">'@mui/material/CssBaseline'</span>;
+
+<span style="color: #569cd6;">function</span> <span style="color: #dcdcaa;">App</span>() {
+  <span style="color: #569cd6;">const</span> [darkMode, setDarkMode] = <span style="color: #dcdcaa;">useState</span>(<span style="color: #569cd6;">true</span>);
+  
+  <span style="color: #569cd6;">const</span> theme = <span style="color: #dcdcaa;">createTheme</span>({
+    palette: {
+      mode: darkMode ? <span style="color: #ce9178;">'dark'</span> : <span style="color: #ce9178;">'light'</span>,
+      primary: {
+        main: <span style="color: #ce9178;">'#3f51b5'</span>,
+      },
+      secondary: {
+        main: <span style="color: #ce9178;">'#f50057'</span>,
+      },
+    },
+  });
+
+  <span style="color: #569cd6;">const</span> <span style="color: #dcdcaa;">toggleDarkMode</span> = () => {
+    <span style="color: #dcdcaa;">setDarkMode</span>(!darkMode);
+  };
+
+  <span style="color: #569cd6;">return</span> (
+    <span style="color: #808080;">&lt;</span>ThemeProvider theme={theme}<span style="color: #808080;">&gt;</span>
+      <span style="color: #808080;">&lt;</span>CssBaseline /<span style="color: #808080;">&gt;</span>
+      <span style="color: #808080;">&lt;</span>div className=<span style="color: #ce9178;">"App"</span><span style="color: #808080;">&gt;</span>
+        <span style="color: #808080;">&lt;</span>Routes<span style="color: #808080;">&gt;</span>
+          <span style="color: #808080;">&lt;</span>Route path=<span style="color: #ce9178;">"/login"</span> element={<span style="color: #808080;">&lt;</span>Login /<span style="color: #808080;">&gt;</span>} /<span style="color: #808080;">&gt;</span>
+          <span style="color: #808080;">&lt;</span>Route path=<span style="color: #ce9178;">"/"</span> element={<span style="color: #808080;">&lt;</span>Dashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} /<span style="color: #808080;">&gt;</span>} /<span style="color: #808080;">&gt;</span>
+        <span style="color: #808080;">&lt;</span>/Routes<span style="color: #808080;">&gt;</span>
+      <span style="color: #808080;">&lt;</span>/div<span style="color: #808080;">&gt;</span>
+    <span style="color: #808080;">&lt;</span>/ThemeProvider<span style="color: #808080;">&gt;</span>
+  );
+}
+
+<span style="color: #569cd6;">export</span> <span style="color: #569cd6;">default</span> App;</div>
+                    <div class="terminal-container">
+                        <div class="terminal-header">
+                            <div>Terminal</div>
+                            <button class="icon-button" title="Close Terminal">
+                                ✖️
+                            </button>
+                        </div>
+                        <div class="terminal-content">
+$ npm start<br>
+> ai-engineer-frontend@1.0.0 start<br>
+> craco start<br>
+<br>
+Starting the development server...<br>
+Compiled successfully!<br>
+<br>
+You can now view ai-engineer-frontend in the browser.<br>
+<br>
+  Local:            http://localhost:3000<br>
+  On Your Network:  http://192.168.1.5:3000<br>
+<br>
+Note that the development build is not optimized.<br>
+To create a production build, use npm run build.<br>
+<br>
+webpack compiled successfully<br>
+$
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-panel">
+                    <div class="chat-header">
+                        <div>AI Assistant</div>
+                        <button class="icon-button" title="Close Chat">
+                            ✖️
+                        </button>
+                    </div>
+                    <div class="chat-messages">
+                        <div class="message user-message">
+                            How do I implement a dark mode toggle in React?
+                        </div>
+                        <div class="message ai-message">
+                            To implement a dark mode toggle in React, you can use the useState hook to track the current theme state and then apply different CSS classes or styles based on that state.<br><br>
+                            Here's a simple implementation:<br><br>
+                            1. Create a state variable:<br>
+                            <code>const [darkMode, setDarkMode] = useState(false);</code><br><br>
+                            2. Create a toggle function:<br>
+                            <code>const toggleDarkMode = () => setDarkMode(!darkMode);</code><br><br>
+                            3. Apply conditional classes to your app container:<br>
+                            <code>&lt;div className={`app ${darkMode ? 'dark' : 'light'}`}&gt;</code><br><br>
+                            4. Create a button for toggling:<br>
+                            <code>&lt;button onClick={toggleDarkMode}&gt;Toggle Theme&lt;/button&gt;</code><br><br>
+                            Would you like me to show you a complete example with CSS?
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" placeholder="Ask the AI..." />
+                        <button class="send-button">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
